@@ -1,7 +1,9 @@
-use clippy_utils::diagnostics::span_lint_and_sugg;
+use std::any::Any;
+
+use clippy_utils::diagnostics::{span_lint, span_lint_and_sugg};
 use clippy_utils::source::snippet;
 use rustc_errors::Applicability;
-use rustc_hir::*;
+use rustc_hir::{Expr, *};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_session::declare_lint_pass;
 
@@ -28,33 +30,37 @@ declare_lint_pass!(BoxRef => [BOX_REF]);
 
 impl LateLintPass<'_> for BoxRef {
     //This works but doesn't span the whole expression
-    // fn check_ty<'tcx>(&mut self, cx: &LateContext<'tcx>, ty: &Ty<'tcx, AmbigArg>) {
-    //     let ty_n = clippy_utils::ty::ty_from_hir_ty(cx, ty.as_unambig_ty());
-    //     if ty_n.boxed_ty().is_some_and(|x| x.is_ref()) {
-    //         span_lint(cx, BOX_REF, ty.span, "Ooops");
-    //     };
-    // }
-    fn check_expr(&mut self, cx: &LateContext<'_>, expr: &'_ rustc_hir::Expr<'_>) {
+    fn check_ty<'tcx>(&mut self, cx: &LateContext<'tcx>, ty: &Ty<'tcx, AmbigArg>) {
+        let ty_n = clippy_utils::ty::ty_from_hir_ty(cx, ty.as_unambig_ty());
+
+        if let Some(boxed_ty) = ty_n.boxed_ty()
+            && boxed_ty.is_ref()
+        {
+            dbg!(boxed_ty);
+            span_lint(cx, BOX_REF, ty.span, "Ooops");
+        }
+    }
+
+    fn check_expr(&mut self, cx: &LateContext<'_>, expr: &'_ Expr<'_>) {
         // Get type of `expr`
         let ty = cx.typeck_results().expr_ty(expr);
         if let Some(boxed_ty) = ty.boxed_ty()
             && boxed_ty.is_ref()
         {
-            let ref_span = if let ExprKind::Call(expr, &[Expr { hir_id, kind, span }]) = expr.kind {
-                // dbg!(kind);
-                span
-            } else {
-                todo!()
+            match expr.kind {
+                ExprKind::Call(_, &[Expr { span, .. }]) => {
+                    span_lint_and_sugg(
+                        cx,
+                        BOX_REF,
+                        expr.span,
+                        "This is nonsense! TODO",
+                        "Remove Box<>",
+                        format!("{}", snippet(cx, span, "<default>")),
+                        Applicability::MachineApplicable,
+                    );
+                },
+                _ => (),
             };
-            span_lint_and_sugg(
-                cx,
-                BOX_REF,
-                expr.span,
-                "This is nonsense! TODO",
-                "Remove Box<>",
-                format!("{}", snippet(cx, ref_span, "<default>")),
-                Applicability::MachineApplicable,
-            );
         }
         // // Match its kind to enter its type
         // if ty.boxed_ty().is_some_and(|x| x.is_ref()) {
