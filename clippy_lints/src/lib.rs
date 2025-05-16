@@ -89,6 +89,7 @@ mod bool_to_int_with_if;
 mod booleans;
 mod borrow_deref_ref;
 mod box_default;
+mod box_ref;
 mod byte_char_slices;
 mod cargo;
 mod casts;
@@ -944,5 +945,6 @@ pub fn register_lints(store: &mut rustc_lint::LintStore, conf: &'static Conf) {
     store.register_late_pass(|_| Box::new(single_option_map::SingleOptionMap));
     store.register_late_pass(move |_| Box::new(redundant_test_prefix::RedundantTestPrefix));
     store.register_late_pass(|_| Box::new(cloned_ref_to_slice_refs::ClonedRefToSliceRefs::new(conf)));
+    store.register_late_pass(|_| Box::new(box_ref::BoxRef));
     // add lints here, do not remove this comment, it's used in `new_lint`
 }
