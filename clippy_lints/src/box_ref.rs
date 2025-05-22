@@ -35,9 +35,9 @@ impl LateLintPass<'_> for BoxRef {
 
         if let Some(boxed_ty) = ty_n.boxed_ty()
             && boxed_ty.is_ref()
+            && boxed_ty.peel_refs().is_sized(cx.tcx, cx.typing_env())
         {
-            dbg!(boxed_ty);
-            span_lint(cx, BOX_REF, ty.span, "Ooops");
+            span_lint(cx, BOX_REF, ty.span, "TODO: lint msg");
         }
     }
 
@@ -53,7 +53,7 @@ impl LateLintPass<'_> for BoxRef {
                         cx,
                         BOX_REF,
                         expr.span,
-                        "This is nonsense! TODO",
+                        "TODO: lint msg2",
                         "Remove Box<>",
                         format!("{}", snippet(cx, span, "<default>")),
                         Applicability::MachineApplicable,
