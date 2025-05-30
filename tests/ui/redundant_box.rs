@@ -30,7 +30,7 @@ fn wide_int_ref_is_redundant_to_box() {
     //~^ redundant_box
 }
 
-// Tests for the cases listed on https://github.com/rust-lang/rust-clippy/issues/2394
+// Tests for some of the cases listed on https://github.com/rust-lang/rust-clippy/issues/2394
 // Box<&T>
 //TODO: Maybe these could go away as they are caught by `clippy::redundant_allocation``
 fn generic_boxed_thin_ref_is_redundant_to_box() {
