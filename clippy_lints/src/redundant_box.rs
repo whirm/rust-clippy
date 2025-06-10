@@ -38,7 +38,7 @@ impl LateLintPass<'_> for RedundantBox {
             && let TyKind::Path(path) = hir_ty.kind
             && let Some(boxed_ty) = qpath_generic_tys(&path).next()
         {
-            span_lint_and_sugg_(cx, hir_ty.span, boxed_ty.span);
+            emit_lint(cx, hir_ty.span, boxed_ty.span);
         }
     }
 
@@ -48,22 +48,19 @@ impl LateLintPass<'_> for RedundantBox {
             && is_thin_type(cx, boxed_ty)
             && let ExprKind::Call(_, &[Expr { span, .. }]) = expr.kind
         {
-            span_lint_and_sugg_(cx, expr.span, span);
+            emit_lint(cx, expr.span, span);
         }
     }
 }
 
 fn is_thin_type<'tcx>(cx: &LateContext<'tcx>, ty: rustc_middle::ty::Ty<'tcx>) -> bool {
-    //TODO: usize's width will be the host's so lints may be misleading when the intended
-    // target is a different architecture. Can/should we do someting about it? Maybe make it
-    // configurable?
     ty.is_sized(cx.tcx, cx.typing_env()) && {
         let size = 8 * approx_ty_size(cx, ty);
         0 < size && size <= cx.sess().target.pointer_width as u64
     }
 }
 
-fn span_lint_and_sugg_(cx: &LateContext<'_>, from_span: rustc_span::Span, to_span: rustc_span::Span) {
+fn emit_lint(cx: &LateContext<'_>, from_span: rustc_span::Span, to_span: rustc_span::Span) {
     span_lint_and_sugg(
         cx,
         REDUNDANT_BOX,
