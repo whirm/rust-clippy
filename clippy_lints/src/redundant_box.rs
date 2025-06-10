@@ -1,4 +1,5 @@
 use clippy_utils::diagnostics::span_lint_and_sugg;
+use clippy_utils::qpath_generic_tys;
 use clippy_utils::source::snippet;
 use clippy_utils::ty::approx_ty_size;
 use rustc_errors::Applicability;
@@ -34,13 +35,10 @@ impl LateLintPass<'_> for RedundantBox {
         let ty = clippy_utils::ty::ty_from_hir_ty(cx, hir_ty.as_unambig_ty());
         if let Some(boxed_ty) = ty.boxed_ty()
             && is_thin_type(cx, boxed_ty)
-        // Extract the contained type for the lint suggestion span
-        // TODO is there a simpler way to do this?:
-            && let TyKind::Path(QPath::Resolved(_, Path { segments, .. })) = hir_ty.kind
-            && let [PathSegment { args: Some(args), .. }] = segments
-            && let [GenericArg::Type(ty)] = args.args
+            && let TyKind::Path(path) = hir_ty.kind
+            && let Some(boxed_ty) = qpath_generic_tys(&path).next()
         {
-            span_lint_and_sugg_(cx, hir_ty.span, ty.span);
+            span_lint_and_sugg_(cx, hir_ty.span, boxed_ty.span);
         }
     }
 
