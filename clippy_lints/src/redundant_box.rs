@@ -4,7 +4,7 @@ use clippy_utils::source::snippet;
 use clippy_utils::ty::approx_ty_size;
 use rustc_errors::Applicability;
 use rustc_hir::{AmbigArg, Expr, ExprKind, GenericArg, Path, PathSegment, QPath, Ty, TyKind};
-use rustc_lint::{LateContext, LateLintPass};
+use rustc_lint::{LateContext, LateLintPass, LintContext};
 use rustc_session::declare_lint_pass;
 
 declare_clippy_lint! {
@@ -58,8 +58,8 @@ fn is_thin_type<'tcx>(cx: &LateContext<'tcx>, ty: rustc_middle::ty::Ty<'tcx>) ->
     // target is a different architecture. Can/should we do someting about it? Maybe make it
     // configurable?
     ty.is_sized(cx.tcx, cx.typing_env()) && {
-        let size = approx_ty_size(cx, ty);
-        0 < size && size <= size_of::<usize>() as u64
+        let size = 8 * approx_ty_size(cx, ty);
+        0 < size && size <= cx.sess().target.pointer_width as u64
     }
 }
 
